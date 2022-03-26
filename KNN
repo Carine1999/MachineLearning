@@ -1,0 +1,59 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 18 14:20:22 2022
+
+@author: Carine
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 18 14:07:47 2022
+
+@author: Carine
+"""
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn import preprocessing
+from sklearn.metrics import confusion_matrix
+data=pd.read_csv("Classified Data")
+scaler = StandardScaler()
+# scaler.fit(data)
+# New_data=scaler.transform(data)
+scaler.fit(data.drop('TARGET CLASS',axis=1))
+scaled_features = scaler.transform(data.drop('TARGET CLASS',axis=1))
+data_feat = pd.DataFrame(scaled_features,columns=data.columns[:-1])
+data_feat.head()
+K=np.arange(1,100)
+error=[]
+X = data_feat
+y = data['TARGET CLASS']
+# X_train, X_test, y_train, y_test = train_test_split(scaled_features,data['TARGET CLASS'],
+# test_size=0.33, random_state=101)
+X_train, X_test, y_train, y_test = train_test_split(scaled_features,data['TARGET CLASS'],
+test_size=0.40, random_state=101)
+y_cv , ytest =np.split(y_test, 2)
+x_cv , xtest =np.split(X_test, 2)
+for i in range(np.size(K)):
+    knn = KNeighborsClassifier(n_neighbors=K[i])
+    knn.fit(X_train,y_train)
+    pred = knn.predict(x_cv)
+    # print (confusion_matrix(y_test, pred))#check
+    # print (knn.score(X_test,y_test))
+    # error[i]=knn.score(y_cv,pred)
+    error.append(np.mean(pred!=y_cv))
+plt.figure()
+plt.plot(K,error,marker='o')
+plt.ylabel('mean error rate')
+
+K_used=np.argmin(error)
+knn = KNeighborsClassifier(K_used)
+knn.fit(X_train,y_train)               #by taking the value of K that gives the least error
+prediction=knn.predict(xtest)
+accuracy=confusion_matrix(ytest, prediction)
+print(knn.score(xtest,ytest))
+# print(knn.score(X_test, y_test))
